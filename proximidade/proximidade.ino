@@ -1,0 +1,1 @@
+cria um arquivo próprio pnc
