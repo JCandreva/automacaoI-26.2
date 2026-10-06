@@ -1,13 +1,20 @@
 #pragma once
 
 void registrarEvento(const String &nome, const String &acao);
+void atualizarIndicadoresPorta();
 
 bool lerReedSwitchFechado() {
   return digitalRead(reedSwitch) == LOW;
 }
 
 void atualizarEstadoReedSwitch() {
+  if (!usarReedSwitch) {
+    return;
+  }
+
   portaFechadaPeloReed = lerReedSwitchFechado();
+  portaEstaFechada = portaFechadaPeloReed;
+  atualizarIndicadoresPorta();
 }
 
 void atualizarIndicadoresPorta() {
@@ -25,28 +32,42 @@ void atualizarIndicadoresPorta() {
 
 void abrirPorta() {
   digitalWrite(saidareleporta, HIGH);
-  portaEstaFechada = false;
   portaDestravada = true;
   portaAbriuDesdeDestrave = false;
+  aguardandoFechamentoPorReed = usarReedSwitch;
   inicioDestravamento = millis();
+  portaEstaFechada = false;
   atualizarIndicadoresPorta();
 }
 
 void fecharPorta() {
   digitalWrite(saidareleporta, LOW);
-  portaEstaFechada = true;
   portaDestravada = false;
   portaAbriuDesdeDestrave = false;
+  aguardandoFechamentoPorReed = false;
+  portaEstaFechada = true;
   atualizarIndicadoresPorta();
 }
 
 void atualizarFechamentoAutomatico() {
-  if (!portaDestravada) {
+  if (!usarReedSwitch) {
+    if (portaDestravada && millis() - inicioDestravamento >= tempoMaximoDestravado) {
+      fecharPorta();
+      registrarEvento("AUTO_TIMEOUT", "FECHOU");
+    }
+    return;
+  }
+
+  if (!aguardandoFechamentoPorReed) {
     return;
   }
 
   if (!portaFechadaPeloReed) {
-    portaAbriuDesdeDestrave = true;
+    if (!portaAbriuDesdeDestrave) {
+      digitalWrite(saidareleporta, LOW);
+      portaAbriuDesdeDestrave = true;
+    }
+    return;
   }
 
   if (!portaAbriuDesdeDestrave) {
@@ -64,13 +85,15 @@ void atualizarFechamentoAutomatico() {
 }
 
 void mudarEstadoPorta(const String &origem) {
-  if (portaEstaFechada) {
+  bool estavaDestravada = portaDestravada;
+
+  if (!estavaDestravada) {
     abrirPorta();
   }
   else {
     fecharPorta();
   }
-  registrarEvento(origem, portaEstaFechada ? "FECHOU" : "ABRIU");
+  registrarEvento(origem, estavaDestravada ? "FECHOU" : "ABRIU");
   tone(buzzer, 500, 500);
 }
 
