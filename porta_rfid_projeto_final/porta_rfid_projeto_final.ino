@@ -78,7 +78,7 @@ void setup() {
   carregarTagsAutorizadas();
   carregarLogsEventos();
   atualizarEstadoReedSwitch();
-  portaEstaFechada = portaFechadaPeloReed;
+  portaEstaFechada = true;
   atualizarIndicadoresPorta();
 }
 

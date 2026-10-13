@@ -46,6 +46,22 @@ void wifiLoop(){
 		}
 	}
 
+	if (request.indexOf("GET /apagarTag") >= 0) {
+		String uidTag = extrairParametro(request, "uid");
+		int indice = -1;
+		if (localizarTag(uidTag, indice)) {
+			for (int i = indice; i < quantidadeTagsAutorizadas - 1; i++) {
+				tagsAutorizadas[i] = tagsAutorizadas[i + 1];
+			}
+			quantidadeTagsAutorizadas--;
+			salvarTagsAutorizadas();
+			Serial.println("Tag removida com sucesso.");
+		}
+		else {
+			Serial.println("Nao foi possivel localizar a tag para remover.");
+		}
+	}
+
 	atualizarEstadoReedSwitch();
 
 	if (request.indexOf("GET /status") >= 0) {
@@ -148,7 +164,7 @@ void wifiLoop(){
 	client.println("document.getElementById('modoCadastroAviso').style.display = modoAtivo ? 'block' : 'none';");
 	client.println("document.getElementById('nomeCadastro').textContent = linhas[5] || '';");
 	client.println("const tagsBody = document.getElementById('tagsBody'); tagsBody.innerHTML = '';");
-	client.println("if (linhas[6]) { linhas[6].split('||').forEach(function(item){ if (!item) return; const partes = item.split('|'); const row = document.createElement('tr'); row.innerHTML = '<td>' + (partes[0] || '') + '</td><td>' + (partes[1] || '') + '</td>'; tagsBody.appendChild(row); }); }");
+	client.println("if (linhas[6]) { linhas[6].split('||').forEach(function(item){ if (!item) return; const partes = item.split('|'); const row = document.createElement('tr'); row.innerHTML = '<td>' + (partes[0] || '') + '</td><td>' + (partes[1] || '') + '</td><td><a href=\\\"/apagarTag?uid=' + encodeURIComponent(partes[0] || '') + '\\\" class=\\\"button secondary\\\">Apagar</a></td>'; tagsBody.appendChild(row); }); }\n");
 	client.println("const logsBody = document.getElementById('logsBody'); logsBody.innerHTML = '';");
 	client.println("if (linhas[7]) { linhas[7].split('||').forEach(function(item){ if (!item) return; const partes = item.split('|'); const row = document.createElement('tr'); row.innerHTML = '<td>' + (partes[0] || '') + '</td><td>' + (partes[1] || '') + '</td><td>' + (partes[2] || '') + '</td>'; logsBody.appendChild(row); }); }");
 	client.println("}");
@@ -197,12 +213,12 @@ void wifiLoop(){
 	client.println("</section>");
 	client.println("<div class='split'><section class='panel'><div class='panel-head'><div><h2>Tags salvas</h2><p>UIDs autorizados e seus nomes vinculados.</p></div><span class='badge'>");
 	client.println(String(quantidadeTagsAutorizadas));
-	client.println(" cadastradas</span></div><table><tr><th>UID</th><th>Nome</th></tr><tbody id='tagsBody'>");
+	client.println(" cadastradas</span></div><table><tr><th>UID</th><th>Nome</th><th>Ação</th></tr><tbody id='tagsBody'>");
 	for (int i = 0; i < quantidadeTagsAutorizadas; i++) {
-		client.println("<tr><td>" + tagsAutorizadas[i].uid + "</td><td>" + tagsAutorizadas[i].nome + "</td></tr>");
+		client.println("<tr><td>" + tagsAutorizadas[i].uid + "</td><td>" + tagsAutorizadas[i].nome + "</td><td><a href='/apagarTag?uid=" + tagsAutorizadas[i].uid + "' class='button secondary'>Apagar</a></td></tr>");
 	}
 	if (quantidadeTagsAutorizadas == 0) {
-		client.println("<tr><td colspan='2' class='empty'>Nenhuma tag cadastrada.</td></tr>");
+		client.println("<tr><td colspan='3' class='empty'>Nenhuma tag cadastrada.</td></tr>");
 	}
 	client.println("</tbody></table></section>");
 	client.println("<section class='panel'><div class='panel-head'><div><h2>Log</h2><p>Eventos recentes de abertura, fechamento e cadastro.</p></div><span class='badge'>");

@@ -365,3 +365,14 @@ void nfcLoop(){
     delay(100);
   }
 }
+
+void apagarTagEspecifica(const String &uid) {
+  int indice = -1;
+  if (localizarTag(uid, indice)) {
+    for (int i = indice; i < quantidadeTagsAutorizadas - 1; i++) {
+      tagsAutorizadas[i] = tagsAutorizadas[i + 1];
+    }
+    quantidadeTagsAutorizadas--;
+    salvarTagsAutorizadas();
+  }
+}
