@@ -25,14 +25,16 @@ bool portaFechadaPeloReed = true;
 bool portaDestravada = false;
 bool portaAbriuDesdeDestrave = false;
 bool aguardandoFechamentoPorReed = false;
-const bool usarReedSwitch = false;
+const bool usarReedSwitch = true;
 bool modoCadastroTag = false;
 String nomeCadastroPendente = "";
 bool horarioDefinido = false;
 long long epochBaseSegundos = 0;
 unsigned long millisBaseHorario = 0;
 unsigned long inicioDestravamento = 0;
+unsigned long inicioAberturaSemReed = 0;
 const unsigned long tempoMaximoDestravado = 30000;
+const unsigned long ttlAberturaSemReed = 2000;
 
 static const int MAX_TAGS = 10;
 static const int MAX_LOGS = 10;

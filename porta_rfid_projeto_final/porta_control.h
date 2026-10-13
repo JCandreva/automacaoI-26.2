@@ -36,6 +36,7 @@ void abrirPorta() {
   portaAbriuDesdeDestrave = false;
   aguardandoFechamentoPorReed = usarReedSwitch;
   inicioDestravamento = millis();
+  inicioAberturaSemReed = millis();
   portaEstaFechada = false;
   atualizarIndicadoresPorta();
 }
@@ -66,6 +67,12 @@ void atualizarFechamentoAutomatico() {
     if (!portaAbriuDesdeDestrave) {
       digitalWrite(saidareleporta, LOW);
       portaAbriuDesdeDestrave = true;
+      inicioAberturaSemReed = millis();
+    }
+
+    if (millis() - inicioAberturaSemReed >= ttlAberturaSemReed) {
+      fecharPorta();
+      registrarEvento("AUTO_TTL", "FECHOU");
     }
     return;
   }
