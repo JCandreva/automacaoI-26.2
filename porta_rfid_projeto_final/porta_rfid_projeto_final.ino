@@ -74,8 +74,34 @@ void setup() {
   }
   iniciarHorario();
   server.begin();
-  SPI.begin();
+
+  // ESP32 padrão VSPI: SCK=18, MISO=19, MOSI=23, SS/SDA=5
+  pinMode(21, OUTPUT);
+  digitalWrite(21, LOW);
+  delay(20);
+  digitalWrite(21, HIGH);
+  delay(50);
+
+  SPI.end();
+  SPI.begin(18, 19, 23, 5);
   mfrc522.PCD_Init();
+  delay(100);
+
+  byte versaoMFRC522 = mfrc522.PCD_ReadRegister(MFRC522::VersionReg);
+  delay(20);
+  byte segundaLeitura = mfrc522.PCD_ReadRegister(MFRC522::VersionReg);
+
+  Serial.print("Versao MFRC522: 0x");
+  Serial.print(versaoMFRC522, HEX);
+  Serial.print(" / 0x");
+  Serial.println(segundaLeitura, HEX);
+
+  if (versaoMFRC522 == 0x00 || versaoMFRC522 == 0xFF ||
+      segundaLeitura == 0x00 || segundaLeitura == 0xFF ||
+      versaoMFRC522 != segundaLeitura) {
+    Serial.println("ERRO NFC: SPI instavel. Verifique RST=21, SS/SDA=5, SCK=18, MISO=19, MOSI=23, GND comum e 3.3V do MFRC522.");
+  }
+
   preferences.begin("rfiddoor", false);
   carregarTagsAutorizadas();
   carregarLogsEventos();
@@ -90,4 +116,5 @@ void loop() {
   processarBotaoFisico();
   wifiLoop();
   nfcLoop();
+  // Serial.println(lerReedSwitchFechado());
 }

@@ -323,7 +323,11 @@ bool definirHorarioAtual(const String &valor) {
 }
 
 void nfcLoop(){
+  static unsigned long ultimaLeituraTag = 0;
+  static String ultimoUidProcessado = "";
+
   if (!mfrc522.PICC_IsNewCardPresent()) {
+    ultimoUidProcessado = "";
     return;
   }
 
@@ -332,6 +336,23 @@ void nfcLoop(){
   }
 
   String uid = uidParaString(mfrc522.uid.uidByte, mfrc522.uid.size);
+
+  // Impede processar várias vezes enquanto a mesma tag permanece sobre o leitor.
+  if (uid == ultimoUidProcessado) {
+    mfrc522.PICC_HaltA();
+    mfrc522.PCD_StopCrypto1();
+    return;
+  }
+
+  if (millis() - ultimaLeituraTag < 500) {
+    mfrc522.PICC_HaltA();
+    mfrc522.PCD_StopCrypto1();
+    return;
+  }
+
+  ultimaLeituraTag = millis();
+  ultimoUidProcessado = uid;
+
   Serial.print("Tag lida: ");
   Serial.println(uid);
 
@@ -360,19 +381,4 @@ void nfcLoop(){
 
   mfrc522.PICC_HaltA();
   mfrc522.PCD_StopCrypto1();
-
-  while (mfrc522.PICC_IsNewCardPresent()) {
-    delay(100);
-  }
-}
-
-void apagarTagEspecifica(const String &uid) {
-  int indice = -1;
-  if (localizarTag(uid, indice)) {
-    for (int i = indice; i < quantidadeTagsAutorizadas - 1; i++) {
-      tagsAutorizadas[i] = tagsAutorizadas[i + 1];
-    }
-    quantidadeTagsAutorizadas--;
-    salvarTagsAutorizadas();
-  }
 }
